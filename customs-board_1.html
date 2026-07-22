@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוח משלוחים – עופר עטדגי</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  header {
+    background: #1a1a2e;
+    color: white;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo { font-size: 15px; font-weight: 700; }
+  .logo span { color: #4f8ef7; }
+
+  .btn-add {
+    background: #4f8ef7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-add:hover { background: #3a7ae0; }
+
+  .wrap { padding: 20px; overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    min-width: 900px;
+  }
+
+  thead tr { background: #1a1a2e; color: white; }
+
+  th {
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid #eef0f5;
+    vertical-align: middle;
+  }
+
+  /* שורות של אותה מכולה – צבע רקע משותף */
+  tr.cont-even td { background: #fff; }
+  tr.cont-odd td { background: #f7f9ff; }
+
+  /* קו עליון לתחילת מכולה חדשה */
+  tr.cont-start td { border-top: 2px solid #d0d7f0; }
+
+  tr:last-child td { border-bottom: none; }
+
+  .bl { font-weight: 700; color: #1a1a2e; font-size: 14px; }
+  .cont-num { font-family: monospace; font-size: 12px; color: #444; font-weight: 600; }
+  .car-name { font-weight: 600; font-size: 13px; color: #1a1a2e; }
+  .vin { font-family: monospace; font-size: 11px; color: #888; margin-top: 2px; }
+  .client-name { font-weight: 600; font-size: 13px; }
+
+  .agent-tag {
+    background: #eef2ff;
+    color: #4338ca;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .eta-text { font-size: 12px; color: #555; }
+  .eta-urgent { color: #e53935; font-weight: 700; }
+
+  td.chk-cell { text-align: center; }
+  input[type=checkbox] {
+    width: 18px; height: 18px;
+    cursor: pointer;
+    accent-color: #4caf50;
+  }
+
+  /* span שמאחד תאים אנכית */
+  td.merged {
+    vertical-align: middle;
+    border-right: 3px solid #4f8ef7;
+  }
+
+  .empty { text-align: center; padding: 50px; color: #aaa; font-size: 14px; }
+
+  /* MODAL */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    direction: rtl;
+  }
+
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .modal-head h2 { font-size: 17px; font-weight: 800; }
+  .close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; }
+
+  .field { margin-bottom: 14px; }
+  label.lbl { display: block; font-size: 11px; font-weight: 700; color: #777; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  input[type=text], input[type=date], select, textarea {
+    width: 100%;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    color: #1a1a2e;
+    outline: none;
+    direction: rtl;
+  }
+  input[type=text]:focus, input[type=date]:focus, select:focus { border-color: #4f8ef7; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4f8ef7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid #eef2ff;
+  }
+
+  .vehicle-block {
+    background: #f7f9ff;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid #e0e7ff;
+  }
+
+  .btn-save {
+    width: 100%;
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-save:hover { background: #2d2d50; }
+  .btn-del {
+    width: 100%;
+    background: transparent;
+    color: #e53935;
+    border: 1.5px solid #ffcdd2;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">OFER ATEDGY <span>|</span> לוח משלוחים</div>
+  <button class="btn-add" onclick="openNew()">＋ מכולה חדשה</button>
+</header>
+
+<div class="wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Master B/L</th>
+        <th>House B/L</th>
+        <th>מכולה</th>
+        <th>רכב</th>
+        <th>שלדה (VIN)</th>
+        <th>לקוח</th>
+        <th>חבר ספנות</th>
+        <th>משלח</th>
+        <th>צפי הגעה</th>
+        <th>רישיון יבוא</th>
+        <th>מניפסט</th>
+        <th>רוקנה</th>
+        <th>שחרור</th>
+        <th>זמינות</th>
+        <th>פקודת מסירה</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">מכולה חדשה</h2>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="section-title">פרטי שטר מטען ומכולה</div>
+
+    <div class="row2">
+      <div class="field">
+        <label class="lbl">Master B/L</label>
+        <input type="text" id="f_bl" placeholder="MEDURS329676">
+      </div>
+      <div class="field">
+        <label class="lbl">House B/L (אופציונלי)</label>
+        <input type="text" id="f_hbl" placeholder="ICL031824">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label class="lbl">מספר מכולה</label>
+        <input type="text" id="f_cont" placeholder="TCNU1397201">
+      </div>
+      <div class="field">
+        <label class="lbl">חבר ספנות</label>
+        <input type="text" id="f_agent" placeholder="MSC / ZIM">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">צפי הגעה (ETA)</label>
+      <input type="date" id="f_eta">
+    </div>
+
+    <div class="field" style="margin-bottom:16px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;color:#444;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="f_via_agent" style="width:18px;height:18px"> דרך משלח – פקודת מסירה
+      </label>
+    </div>
+    <div class="field" id="forwarder_wrap">
+      <label class="lbl">שם המשלח</label>
+      <input type="text" id="f_forwarder" placeholder="אדיב / שם המשלח">
+    </div>
+
+    <div class="section-title">רכב 1</div>
+    <div class="vehicle-block">
+      <div class="row2">
+        <div class="field">
+          <label class="lbl">דגם רכב</label>
+          <input type="text" id="f_car1" placeholder="2026 BMW X6">
+        </div>
+        <div class="field">
+          <label class="lbl">שלדה (VIN)</label>
+          <input type="text" id="f_vin1" placeholder="5UX33EX06-T9-117751">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="lbl">לקוח</label>
+        <input type="text" id="f_client1" placeholder="שם הלקוח">
+      </div>
+    </div>
+
+    <div class="section-title">רכב 2 (אופציונלי)</div>
+    <div class="vehicle-block">
+      <div class="row2">
+        <div class="field">
+          <label class="lbl">דגם רכב</label>
+          <input type="text" id="f_car2" placeholder="2026 Cadillac Escalade IQ EV">
+        </div>
+        <div class="field">
+          <label class="lbl">שלדה (VIN)</label>
+          <input type="text" id="f_vin2" placeholder="1GYTEFKL8-TU-106261">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="lbl">לקוח</label>
+        <input type="text" id="f_client2" placeholder="שם הלקוח">
+      </div>
+    </div>
+
+    <button class="btn-save" onclick="saveCont()">שמור</button>
+    <button class="btn-del" id="btnDel" style="display:none" onclick="deleteCont()">מחק מכולה</button>
+  </div>
+</div>
+
+<script>
+localStorage.removeItem('oa2_data');
+let data = JSON.parse(localStorage.getItem('oa2_data') || '[]');
+let editId = null;
+
+function saveData() { localStorage.setItem('oa2_data', JSON.stringify(data)); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  const diff = (dt - new Date()) / 86400000;
+  return { str: dt.toLocaleDateString('he-IL', {day:'2-digit',month:'2-digit',year:'2-digit'}), diff };
+}
+
+function render() {
+  const tb = document.getElementById('tbody');
+  if (!data.length) {
+  // אין נתוני דוגמה – מתחיל ריק
+  saveData();
+}
+
+render();
+</script>
+</body>
+</html>
