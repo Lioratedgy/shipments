@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוח משלוחים – עופר עטדגי</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; direction: rtl; }
+  header { background: #1a1a2e; color: white; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .logo { font-size: 15px; font-weight: 700; }
+  .logo span { color: #4f8ef7; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; display: inline-block; margin-left: 6px; }
+  .btn-add { background: #4f8ef7; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .btn-add:hover { background: #3a7ae0; }
+  .wrap { padding: 20px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.07); min-width: 1000px; }
+  thead tr { background: #1a1a2e; color: white; }
+  th { padding: 12px 14px; font-size: 12px; font-weight: 600; text-align: right; white-space: nowrap; }
+  td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #eef0f5; vertical-align: middle; }
+  tr.cont-even td { background: #fff; }
+  tr.cont-odd td { background: #f7f9ff; }
+  tr.cont-start td { border-top: 2px solid #d0d7f0; }
+  tr:last-child td { border-bottom: none; }
+  .bl { font-weight: 700; color: #1a1a2e; font-size: 14px; }
+  .cont-num { font-family: monospace; font-size: 12px; color: #444; font-weight: 600; }
+  .car-name { font-weight: 600; font-size: 13px; }
+  .vin { font-family: monospace; font-size: 11px; color: #888; margin-top: 2px; }
+  .agent-tag { background: #eef2ff; color: #4338ca; padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .empty { text-align: center; padding: 50px; color: #aaa; font-size: 14px; }
+  .status-icon { font-size: 18px; display: block; text-align: center; }
+  .forwarder-red { font-size: 13px; font-weight: 600; color: #e53935; }
+  /* MODAL */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+  .overlay.open { display: flex; }
+  .modal { background: white; border-radius: 14px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 24px; direction: rtl; }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-head h2 { font-size: 17px; font-weight: 800; }
+  .close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; }
+  .field { margin-bottom: 14px; }
+  label.lbl { display: block; font-size: 11px; font-weight: 700; color: #777; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  input[type=text], input[type=date], select, textarea { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 9px 12px; font-family: 'Heebo', sans-serif; font-size: 14px; color: #1a1a2e; outline: none; direction: rtl; }
+  input[type=text]:focus, input[type=date]:focus, select:focus { border-color: #4f8ef7; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .section-title { font-size: 12px; font-weight: 700; color: #4f8ef7; text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 1.5px solid #eef2ff; }
+  .vehicle-block { background: #f7f9ff; border-radius: 10px; padding: 14px; margin-bottom: 10px; border: 1px solid #e0e7ff; }
+  .btn-save { width: 100%; background: #1a1a2e; color: white; border: none; border-radius: 8px; padding: 11px; font-family: 'Heebo', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+  .btn-save:hover { background: #2d2d50; }
+  .btn-del { width: 100%; background: transparent; color: #e53935; border: 1.5px solid #ffcdd2; border-radius: 8px; padding: 8px; font-family: 'Heebo', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .loading { text-align: center; padding: 40px; color: #888; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">OFER ATEDGY <span>|</span> לוח משלוחים <span class="status-dot" id="statusDot"></span></div>
+  <button class="btn-add" onclick="openNew()">＋ מכולה חדשה</button>
+</header>
+
+<div class="wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Master B/L</th>
+        <th>House B/L</th>
+        <th>מכולה</th>
+        <th>רכב</th>
+        <th>שלדה (VIN)</th>
+        <th>לקוח</th>
+        <th>חבר ספנות</th>
+        <th>משלח</th>
+        <th>צפי הגעה</th>
+        <th>רישיון יבוא</th>
+        <th>מניפסט</th>
+        <th>רוקנה</th>
+        <th>שחרור</th>
+        <th>זמינות</th>
+        <th>פקודת מסירה</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"><tr><td colspan="16" class="loading">טוען נתונים...</td></tr></tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">מכולה חדשה</h2>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="section-title">פרטי שטר מטען ומכולה</div>
+    <div class="row2">
+      <div class="field"><label class="lbl">Master B/L</label><input type="text" id="f_bl" placeholder="MEDURS398036"></div>
+      <div class="field"><label class="lbl">House B/L (אופציונלי)</label><input type="text" id="f_hbl" placeholder="026909"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label class="lbl">מספר מכולה</label><input type="text" id="f_cont" placeholder="TGBU9335000"></div>
+      <div class="field"><label class="lbl">חבר ספנות</label><input type="text" id="f_agent" placeholder="MSC / ZIM"></div>
+    </div>
+    <div class="field"><label class="lbl">צפי הגעה (ETA)</label><input type="date" id="f_eta"></div>
+
+    <div class="field" style="margin-bottom:16px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;color:#444;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="f_via_agent" style="width:18px;height:18px"> דרך משלח – פקודת מסירה
+      </label>
+    </div>
+    <div class="field">
+      <label class="lbl">שם המשלח (אופציונלי)</label>
+      <input type="text" id="f_forwarder" placeholder="אדיב / שם המשלח">
+    </div>
+
+    <div class="section-title">רכב 1</div>
+    <div class="vehicle-block">
+      <div class="row2">
+        <div class="field"><label class="lbl">דגם רכב</label><input type="text" id="f_car1" placeholder="2026 Toyota Highlander"></div>
+        <div class="field"><label class="lbl">שלדה (VIN)</label><input type="text" id="f_vin1" placeholder="5TDADAB54-TS-042535"></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label class="lbl">לקוח</label><input type="text" id="f_client1" placeholder="שם הלקוח"></div>
+    </div>
+
+    <div class="section-title">רכב 2 (אופציונלי)</div>
+    <div class="vehicle-block">
+      <div class="row2">
+        <div class="field"><label class="lbl">דגם רכב</label><input type="text" id="f_car2" placeholder="2026 Hyundai Palisade"></div>
+        <div class="field"><label class="lbl">שלדה (VIN)</label><input type="text" id="f_vin2" placeholder="KM8RMESA6-TU-070500"></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label class="lbl">לקוח</label><input type="text" id="f_client2" placeholder="שם הלקוח"></div>
+    </div>
+
+    <button class="btn-save" onclick="saveCont()">שמור</button>
+    <button class="btn-del" id="btnDel" style="display:none" onclick="deleteCont()">מחק מכולה</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://rhzzflotvjitxuaknolw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoenpmbG90dmppdHh1YWtub2x3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDcyMjY5OSwiZXhwIjoyMTAwMjk4Njk5fQ.9oXj0F7FNrTlFE574zCD0uN1gmQFURDgE8QG2HkJUJ4';
+
+let data = [];
+let editId = null;
+
+async function api(method, path, body) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (method === 'GET') return res.json();
+  return res;
+}
+
+async function loadData() {
+  try {
+    data = await api('GET', 'shipments?order=created_at.desc');
+    document.getElementById('statusDot').style.background = '#4caf50';
+    render();
+  } catch(e) {
+    document.getElementById('statusDot').style.background = '#e53935';
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="16" class="empty">שגיאה בטעינת נתונים</td></tr>';
+  }
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('he-IL', {day:'2-digit',month:'2-digit',year:'2-digit'});
+}
+
+function icon(val) { return val ? '✅' : '❌'; }
+
+function render() {
+  const tb = document.getElementById('tbody');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="16" class="empty">אין מכולות. לחץ "+ מכולה חדשה"</td></tr>';
+    return;
+  }
+
+  let html = '';
+  data.forEach((c, ci) => {
+    const parity = ci % 2 === 0 ? 'cont-even' : 'cont-odd';
+    const vehicles = [
+      { car: c.car1, vin: c.vin1, client: c.client1 },
+      { car: c.car2, vin: c.vin2, client: c.client2 },
+    ].filter(v => v.car || v.client);
+    const rows = vehicles.length || 1;
+
+    vehicles.forEach((v, vi) => {
+      const isFirst = vi === 0;
+      html += `<tr class="${parity}${isFirst ? ' cont-start' : ''}">`;
+      if (isFirst) {
+        html += `
+          <td rowspan="${rows}" style="border-right:3px solid #4f8ef7"><div class="bl">${c.bl || '—'}</div></td>
+          <td rowspan="${rows}" style="font-size:12px;color:#666">${c.hbl || '—'}</td>
+          <td rowspan="${rows}"><span class="cont-num">${c.cont || '—'}</span></td>`;
+      }
+      html += `
+        <td><div class="car-name">${v.car || '—'}</div></td>
+        <td><div class="vin">${v.vin || '—'}</div></td>
+        <td style="font-weight:600">${v.client || '—'}</td>`;
+      if (isFirst) {
+        html += `
+          <td rowspan="${rows}">${c.agent ? `<span class="agent-tag">${c.agent}</span>` : '—'}</td>
+          <td rowspan="${rows}" class="${c.forwarder ? 'forwarder-red' : ''}">${c.forwarder || '—'}</td>
+          <td rowspan="${rows}" style="font-size:12px">${fmtDate(c.eta)}</td>
+          <td rowspan="${rows}"><span class="status-icon">${icon(c.importlic)}</span></td>
+          <td rowspan="${rows}"><span class="status-icon">${c.via_agent ? '—' : icon(c.manifest)}</span></td>
+          <td rowspan="${rows}"><span class="status-icon">${c.via_agent ? '—' : icon(c.emptied)}</span></td>
+          <td rowspan="${rows}"><span class="status-icon">${c.via_agent ? '—' : icon(c.clearance)}</span></td>
+          <td rowspan="${rows}"><span class="status-icon">${c.via_agent ? icon(c.availability) : '—'}</span></td>
+          <td rowspan="${rows}"><span class="status-icon">${c.via_agent ? icon(c.delivery_order) : '—'}</span></td>
+          <td rowspan="${rows}" style="text-align:center">
+            <button onclick="openEdit('${c.id}')" style="background:none;border:none;cursor:pointer;font-size:16px">✏️</button>
+          </td>`;
+      }
+      html += '</tr>';
+    });
+  });
+  tb.innerHTML = html;
+}
+
+function openNew() {
+  editId = null;
+  document.getElementById('modalTitle').textContent = 'מכולה חדשה';
+  document.getElementById('btnDel').style.display = 'none';
+  ['bl','hbl','cont','agent','forwarder','car1','vin1','client1','car2','vin2','client2'].forEach(f => {
+    const el = document.getElementById('f_' + f);
+    if (el) el.value = '';
+  });
+  document.getElementById('f_eta').value = '';
+  document.getElementById('f_via_agent').checked = false;
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEdit(id) {
+  const c = data.find(x => x.id === id);
+  if (!c) return;
+  editId = id;
+  document.getElementById('modalTitle').textContent = 'עריכת מכולה';
+  document.getElementById('btnDel').style.display = 'block';
+  document.getElementById('f_bl').value = c.bl || '';
+  document.getElementById('f_hbl').value = c.hbl || '';
+  document.getElementById('f_cont').value = c.cont || '';
+  document.getElementById('f_agent').value = c.agent || '';
+  document.getElementById('f_eta').value = c.eta || '';
+  document.getElementById('f_forwarder').value = c.forwarder || '';
+  document.getElementById('f_via_agent').checked = !!c.via_agent;
+  document.getElementById('f_car1').value = c.car1 || '';
+  document.getElementById('f_vin1').value = c.vin1 || '';
+  document.getElementById('f_client1').value = c.client1 || '';
+  document.getElementById('f_car2').value = c.car2 || '';
+  document.getElementById('f_vin2').value = c.vin2 || '';
+  document.getElementById('f_client2').value = c.client2 || '';
+  document.getElementById('modal').classList.add('open');
+}
+
+async function saveCont() {
+  const entry = {
+    bl: document.getElementById('f_bl').value.trim(),
+    hbl: document.getElementById('f_hbl').value.trim(),
+    cont: document.getElementById('f_cont').value.trim(),
+    agent: document.getElementById('f_agent').value.trim(),
+    eta: document.getElementById('f_eta').value || null,
+    forwarder: document.getElementById('f_forwarder').value.trim(),
+    via_agent: document.getElementById('f_via_agent').checked,
+    car1: document.getElementById('f_car1').value.trim(),
+    vin1: document.getElementById('f_vin1').value.trim(),
+    client1: document.getElementById('f_client1').value.trim(),
+    car2: document.getElementById('f_car2').value.trim(),
+    vin2: document.getElementById('f_vin2').value.trim(),
+    client2: document.getElementById('f_client2').value.trim(),
+  };
+
+  if (!entry.bl && !entry.cont) { alert('נא להזין B/L או מספר מכולה'); return; }
+
+  if (editId) {
+    await api('PATCH', `shipments?id=eq.${editId}`, entry);
+  } else {
+    entry.importlic = false; entry.manifest = false; entry.emptied = false;
+    entry.clearance = false; entry.availability = false; entry.delivery_order = false;
+    await api('POST', 'shipments', entry);
+  }
+
+  await loadData();
+  closeModal();
+}
+
+async function deleteCont() {
+  if (!confirm('למחוק מכולה זו?')) return;
+  await api('DELETE', `shipments?id=eq.${editId}`);
+  await loadData();
+  closeModal();
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+// רענון אוטומטי כל 30 שניות
+setInterval(loadData, 30000);
+
+loadData();
+</script>
+</body>
+</html>
